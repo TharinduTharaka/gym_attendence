@@ -19,5 +19,10 @@ public class AttendanceController {
         return attendanceManagerService.getAllAttendance(emp_id);
     }
 
+    @GetMapping("/get-user-today-attendance/{emp_id}")
+    public Response getUserTodayAttendance(@PathVariable String emp_id) {
+        return attendanceManagerService.getUserTodayAttendance(emp_id);
+    }
+
 
 }

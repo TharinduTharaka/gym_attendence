@@ -27,9 +27,17 @@ public class AttendanceManagerService implements AttendanceManager {
 
 
     @Override
-    public Response getAllAttendance(String emp_id) {
+    public Response getUserTodayAttendance(String emp_id) {
 
-        String punchTime = "2023-03-14";
+        Date todayDate = new Date();
+
+        String punchTime = "2023-03-09";
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+//        String punchTime = dateFormat.format(todayDate);
+
+        int hr = 0, min = 0;
 
         List<IclockTransactionEntity> iclockTransactionEntityList = iclockTransactionRepository.findByEmpCode(emp_id);
 
@@ -41,6 +49,7 @@ public class AttendanceManagerService implements AttendanceManager {
 
             attendanceModel.setId(attendance.getId());
             attendanceModel.setEmpCode(attendance.getEmpCode());
+//            attendanceModel.setEmpName(attendance.);
             attendanceModel.setDate(dateConvert(attendance.getPunchTime()));
             attendanceModel.setTime(timeConvert(attendance.getPunchTime()));
 
@@ -53,7 +62,7 @@ public class AttendanceManagerService implements AttendanceManager {
         PunchData punchData = new PunchData();
         punchData.setDate(attendanceModelArrayList.get(0).getDate());
         punchData.setInTime(attendanceModelArrayList.get(0).getTime());
-
+        punchData.setEmpNo(attendanceModelArrayList.get(0).getEmpCode());
 
         if (attendanceModelArrayList.size() > 1) {
             punchData.setOutTime(attendanceModelArrayList.get(attendanceModelArrayList.size() - 1).getTime());
@@ -61,8 +70,98 @@ public class AttendanceManagerService implements AttendanceManager {
             punchData.setOutTime("No Time Found");
         }
 
-        punchData.setDuration(calDuration(punchData.getInTime(), punchData.getOutTime()));
+        double difference = calDuration(punchData.getInTime(), punchData.getOutTime());
+        double time = difference;
+        hr = (int) time / 3600;
+        time = (int) time % 3600;
+        min = (int) time / 60;
 
+
+        String timeDef = Integer.toString(hr) + " Hour " + Integer.toString(min) + " Min";
+
+        punchData.setDuration(timeDef);
+//        punchData.setEmpName(attendance);
+
+        int status = calAttendanceStatus(hr);
+        punchData.setStatus(status);
+
+        punchDataList.add(punchData);
+
+
+        Response response = new Response();
+        response.setCode(200);
+//        response.setData(iclockTransactionRepository.findByEmpCode(emp_id));
+        response.setData(punchDataList);
+//        response.setData(attendanceModelArrayList);
+        response.setMsg("Get All Maintenance");
+
+        return response;
+    }
+
+
+    @Override
+    public Response getAllAttendance(String emp_id) {
+
+//        Date todayDate = new Date();
+
+        String punchTime = "2023-03-16";
+
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+//        String punchTime = dateFormat.format(todayDate);
+
+
+        int hr = 0, min = 0;
+
+        List<IclockTransactionEntity> iclockTransactionEntityList = iclockTransactionRepository.findByEmpCode(emp_id);
+
+
+        List<AttendanceModel> attendanceModelArrayList = new ArrayList<>();
+        for (IclockTransactionEntity attendance : iclockTransactionEntityList) {
+
+            AttendanceModel attendanceModel = new AttendanceModel();
+
+//            attendanceModel.setId(attendance.getId());
+            attendanceModel.setEmpCode(attendance.getEmpCode());
+//            attendanceModel.setEmpName(attendance.);
+            attendanceModel.setDate(dateConvert(attendance.getPunchTime()));
+            attendanceModel.setTime(timeConvert(attendance.getPunchTime()));
+//            attendanceModel.getDate();
+            if (punchTime.equalsIgnoreCase(attendanceModel.getDate())) {
+
+                attendanceModelArrayList.add(attendanceModel);
+            }
+
+        }
+
+
+        List<PunchData> punchDataList = new ArrayList<>();
+
+        PunchData punchData = new PunchData();
+        punchData.setDate(attendanceModelArrayList.get(0).getDate());
+        punchData.setInTime(attendanceModelArrayList.get(0).getTime());
+        punchData.setEmpNo(attendanceModelArrayList.get(0).getEmpCode());
+
+        if (attendanceModelArrayList.size() > 1) {
+            punchData.setOutTime(attendanceModelArrayList.get(attendanceModelArrayList.size() - 1).getTime());
+        } else {
+            punchData.setOutTime("No Time Found");
+        }
+
+        double difference = calDuration(punchData.getInTime(), punchData.getOutTime());
+        double time = difference;
+        hr = (int) time / 3600;
+        time = (int) time % 3600;
+        min = (int) time / 60;
+
+
+        String timeDef = Integer.toString(hr) + " Hour " + Integer.toString(min) + " Min";
+
+        punchData.setDuration(timeDef);
+//        punchData.setEmpName(attendance);
+
+        int status = calAttendanceStatus(hr);
+        punchData.setStatus(status);
 
         punchDataList.add(punchData);
 
@@ -116,6 +215,10 @@ public class AttendanceManagerService implements AttendanceManager {
 //        return filteredData;
 //    }
 
+    public void createUserTodayAttendance(String emp_id) {
+
+    }
+
     public void attendanceCalculator() {
 
         List<IclockTransactionEntity> iclockTransactionEntityList = iclockTransactionRepository.findAll();
@@ -135,7 +238,7 @@ public class AttendanceManagerService implements AttendanceManager {
     }
 
 
-    public String calDuration(String inTime, String outTime) {
+    public double calDuration(String inTime, String outTime) {
 
         SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
         Date date1;
@@ -148,32 +251,53 @@ public class AttendanceManagerService implements AttendanceManager {
             throw new RuntimeException(e);
         }
 
-        int hr = 0, min = 0;
 
         double difference = (date2.getTime() - date1.getTime()) / 1000.00;
-        double time = difference;
 
 
-        hr = (int) time / 3600;
-        time = (int) time % 3600;
-        min = (int) time / 60;
+        return difference;
+    }
 
+    public int calHours(int hr) {
+        int status;
 
-        String timeDef = Integer.toString(hr) + " Hour "  + Integer.toString(min) + " Min";
+        if (hr > 2) {
+            status = 1;
+        } else if (hr == 2) {
+            status = 3;
+        } else {
+            status = 2;
+        }
 
-        return timeDef;
+        return status;
+    }
+
+    public int calAttendanceStatus(int hr) {
+        int status;
+
+        if (hr > 2) {
+            status = 1;
+        } else if (hr == 2) {
+            status = 3;
+        } else {
+            status = 2;
+        }
+
+        return status;
     }
 
     public String dateConvert(Date punch_time) {
+        String date = null;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String date = dateFormat.format(punch_time);
+        date = dateFormat.format(punch_time);
 
         return date;
     }
 
     public String timeConvert(Date punch_time) {
+        String time = null;
         SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm:ss");
-        String time = timeFormat.format(punch_time);
+        time = timeFormat.format(punch_time);
 
         return time;
     }

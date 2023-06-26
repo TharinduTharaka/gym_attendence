@@ -9,5 +9,7 @@ import org.springframework.stereotype.Service;
 
 public interface AttendanceManager  {
 
+
+    Response getUserTodayAttendance(String empID);
     Response getAllAttendance(String empID);
 }

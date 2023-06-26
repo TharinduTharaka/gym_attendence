@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class AttendanceModel {
 
     private int id;
+    private String empName;
     private String empCode;
     private  String date;
     private String time;

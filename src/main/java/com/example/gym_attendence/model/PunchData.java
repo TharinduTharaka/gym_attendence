@@ -13,11 +13,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PunchData {
 
-
+    private String empName;
+    private String empNo;
     private String date;
     private String inTime;
     private String outTime;
-
+    private int status;
     private String duration;
 
 //    public PunchData(LocalDate date, LocalDateTime inTime, LocalDateTime outTime) {
